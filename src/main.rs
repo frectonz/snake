@@ -9,6 +9,7 @@ enum CellType {
     Empty,
     Snake,
     Food,
+    SnakeHead,
 }
 
 #[derive(Debug)]
@@ -23,6 +24,7 @@ struct Board {
     rows: usize,
     columns: usize,
     cells: Vec<Cell>,
+    game_over: bool,
 }
 
 impl Board {
@@ -46,6 +48,7 @@ impl Board {
             rows,
             columns,
             cells,
+            game_over: false,
         }
     }
 
@@ -65,6 +68,10 @@ impl Board {
 
     fn is_empty(&self, col: usize, row: usize) -> bool {
         self.get_cell(col, row) == CellType::Empty
+    }
+
+    fn is_snake(&self, col: usize, row: usize) -> bool {
+        self.get_cell(col, row) == CellType::Snake
     }
 
     fn generate_food(&mut self) {
@@ -100,6 +107,9 @@ impl Board {
                 CellType::Food => {
                     draw_rectangle(x, y, BLOCK_SIZE, BLOCK_SIZE, RED);
                 }
+                CellType::SnakeHead => {
+                    draw_rectangle(x, y, BLOCK_SIZE, BLOCK_SIZE, BLUE);
+                }
             }
 
             draw_rectangle_lines(x, y, BLOCK_SIZE, BLOCK_SIZE, 1., BLACK);
@@ -114,6 +124,17 @@ impl Board {
         }
 
         draw_rectangle_lines(offset_x, offset_y, width, height, 2., BLACK);
+
+        if self.game_over {
+            draw_text(
+                "GAME OVER",
+                offset_x + width / 2. - (100.),
+                offset_y + height / 2.,
+                50.,
+                WHITE,
+            );
+            return;
+        }
     }
 }
 
@@ -165,6 +186,11 @@ impl Snake {
             },
         };
 
+        if board.is_snake(new_head.col, new_head.row) {
+            board.game_over = true;
+            return;
+        }
+
         self.parts.push_front(new_head);
         self.pop_end(board);
     }
@@ -175,6 +201,11 @@ impl Snake {
             col: head.col,
             row: (head.row + 1) % board.rows,
         };
+
+        if board.is_snake(new_head.col, new_head.row) {
+            board.game_over = true;
+            return;
+        }
 
         self.parts.push_front(new_head);
         self.pop_end(board);
@@ -191,6 +222,11 @@ impl Snake {
             row: head.row,
         };
 
+        if board.is_snake(new_head.col, new_head.row) {
+            board.game_over = true;
+            return;
+        }
+
         self.parts.push_front(new_head);
         self.pop_end(board);
     }
@@ -202,13 +238,24 @@ impl Snake {
             row: head.row,
         };
 
+        if board.is_snake(new_head.col, new_head.row) {
+            board.game_over = true;
+            return;
+        }
+
         self.parts.push_front(new_head);
         self.pop_end(board);
     }
 
-    fn grow(&mut self, board: &mut Board, next: Part) {
-        board.set_cell(next.col, next.row, CellType::Snake);
-        self.parts.push_front(next);
+    fn grow(&mut self, board: &mut Board) {
+        let tail = self.parts.back().unwrap();
+        let new_tail = Part {
+            col: tail.col,
+            row: tail.row,
+        };
+
+        board.set_cell(new_tail.col, new_tail.row, CellType::Snake);
+        self.parts.push_back(new_tail);
     }
 
     fn update(&mut self, board: &mut Board) {
@@ -223,41 +270,17 @@ impl Snake {
         }
 
         let head = self.parts.front().unwrap();
-
-        let next_cell = match self.direction {
-            Direction::Up => Part {
-                col: head.col,
-                row: if head.row == 0 {
-                    board.rows - 1
-                } else {
-                    head.row - 1
-                },
-            },
-            Direction::Down => Part {
-                col: head.col,
-                row: (head.row + 1) % board.rows,
-            },
-            Direction::Left => Part {
-                col: if head.col == 0 {
-                    board.columns - 1
-                } else {
-                    head.col - 1
-                },
-                row: head.row,
-            },
-            Direction::Right => Part {
-                col: (head.col + 1) % board.columns,
-                row: head.row,
-            },
-        };
-
-        if board.is_food(next_cell.col, next_cell.row) {
-            self.grow(board, next_cell);
+        if board.is_food(head.col, head.row) {
+            self.grow(board);
             board.generate_food();
         }
 
-        for c in self.parts.iter() {
-            board.set_cell(c.col, c.row, CellType::Snake);
+        for (i, c) in self.parts.iter().enumerate().rev() {
+            if i == 0 {
+                board.set_cell(c.col, c.row, CellType::SnakeHead);
+            } else {
+                board.set_cell(c.col, c.row, CellType::Snake);
+            }
         }
     }
 
@@ -294,9 +317,11 @@ async fn main() {
 
         board.draw();
 
-        snake.update(&mut board);
+        if !board.game_over {
+            snake.update(&mut board);
+        }
 
-        if counter % 20 == 0 {
+        if counter % 10 == 0 {
             snake.update_movement(&mut board)
         }
 
