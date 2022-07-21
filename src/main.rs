@@ -143,6 +143,7 @@ struct Part {
     row: usize,
 }
 
+#[derive(PartialEq)]
 enum Direction {
     Up,
     Left,
@@ -259,13 +260,13 @@ impl Snake {
     }
 
     fn update(&mut self, board: &mut Board) {
-        if is_key_pressed(KeyCode::Up) {
+        if is_key_pressed(KeyCode::Up) && self.direction != Direction::Down {
             self.direction = Direction::Up;
-        } else if is_key_pressed(KeyCode::Down) {
+        } else if is_key_pressed(KeyCode::Down) && self.direction != Direction::Up {
             self.direction = Direction::Down;
-        } else if is_key_pressed(KeyCode::Left) {
+        } else if is_key_pressed(KeyCode::Left) && self.direction != Direction::Right {
             self.direction = Direction::Left;
-        } else if is_key_pressed(KeyCode::Right) {
+        } else if is_key_pressed(KeyCode::Right) && self.direction != Direction::Left {
             self.direction = Direction::Right;
         }
 
