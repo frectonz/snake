@@ -74,6 +74,13 @@ impl Board {
         self.get_cell(col, row) == CellType::Snake
     }
 
+    fn reset(&mut self) {
+        for cell in &mut self.cells {
+            cell.cell = CellType::Empty;
+        }
+        self.game_over = false;
+    }
+
     fn generate_food(&mut self) {
         let mut rand_row = rand::gen_range(0, self.rows);
         let mut rand_col = rand::gen_range(0, self.columns);
@@ -165,6 +172,12 @@ impl Snake {
             parts,
             direction: Direction::Right,
         }
+    }
+
+    fn reset(&mut self) {
+        self.parts.clear();
+        self.parts.push_back(Part { col: 2, row: 2 });
+        self.direction = Direction::Right;
     }
 
     fn pop_end(&mut self, board: &mut Board) {
@@ -324,6 +337,12 @@ async fn main() {
 
         if counter % 10 == 0 {
             snake.update_movement(&mut board)
+        }
+
+        if is_key_pressed(KeyCode::Space) && board.game_over {
+            board.reset();
+            snake.reset();
+            board.generate_food();
         }
 
         counter += 1;
