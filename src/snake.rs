@@ -6,7 +6,7 @@ struct Part {
     row: usize,
 }
 
-#[derive(PartialEq)]
+#[derive(PartialEq, Eq)]
 pub enum Direction {
     Up,
     Left,
@@ -17,6 +17,12 @@ pub enum Direction {
 pub struct Snake {
     direction: Direction,
     parts: LinkedList<Part>,
+}
+
+impl Default for Snake {
+    fn default() -> Self {
+        Self::new()
+    }
 }
 
 impl Snake {

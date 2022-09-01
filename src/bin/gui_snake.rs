@@ -126,7 +126,6 @@ fn draw_board(board: &Board, snake: &Snake) {
             30.,
             WHITE,
         );
-        return;
     } else {
         draw_centered_text("SNAKE", screen_width() / 2., offset_y - 80., 100., GREEN);
         draw_centered_text(
