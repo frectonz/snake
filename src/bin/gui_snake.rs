@@ -8,6 +8,7 @@ fn window_conf() -> Conf {
         window_title: "Snake".to_owned(),
         window_width: 800,
         window_height: 800,
+        fullscreen: true,
         ..Default::default()
     }
 }
@@ -24,13 +25,17 @@ async fn main() {
 
     let mut count = 0;
     loop {
-        clear_background(WHITE);
+        clear_background(BLACK);
 
-        draw_board(&board);
+        if is_key_pressed(KeyCode::Q) {
+            break;
+        }
+
+        draw_board(&board, &snake);
         update_board(&mut board, &mut snake);
         next_frame().await;
 
-        if count == 10 {
+        if count == 5 {
             count = 0;
             snake.update_movement(&mut board);
         }
@@ -41,13 +46,13 @@ async fn main() {
 
 fn update_board(board: &mut Board, snake: &mut Snake) {
     if !board.game_over() {
-        if is_key_pressed(KeyCode::Up) && snake.direction() != &Direction::Down {
+        if is_key_pressed(KeyCode::Up) {
             snake.change_direction(Direction::Up);
-        } else if is_key_pressed(KeyCode::Down) && snake.direction() != &Direction::Up {
+        } else if is_key_pressed(KeyCode::Down) {
             snake.change_direction(Direction::Down);
-        } else if is_key_pressed(KeyCode::Left) && snake.direction() != &Direction::Right {
+        } else if is_key_pressed(KeyCode::Left) {
             snake.change_direction(Direction::Left);
-        } else if is_key_pressed(KeyCode::Right) && snake.direction() != &Direction::Left {
+        } else if is_key_pressed(KeyCode::Right) {
             snake.change_direction(Direction::Right);
         }
         snake.update(board);
@@ -56,11 +61,10 @@ fn update_board(board: &mut Board, snake: &mut Snake) {
     if is_key_pressed(KeyCode::Space) && board.game_over() {
         board.reset();
         snake.reset();
-        board.generate_food();
     }
 }
 
-fn draw_board(board: &Board) {
+fn draw_board(board: &Board, snake: &Snake) {
     let width = board.columns() as f32 * BLOCK_SIZE;
     let height = board.rows() as f32 * BLOCK_SIZE;
 
@@ -78,19 +82,71 @@ fn draw_board(board: &Board) {
             CellType::SnakeHead => draw_rectangle(x, y, BLOCK_SIZE, BLOCK_SIZE, BLUE),
         };
 
-        draw_rectangle_lines(x, y, BLOCK_SIZE, BLOCK_SIZE, 1., BLACK);
+        draw_rectangle_lines(x, y, BLOCK_SIZE, BLOCK_SIZE, 1., WHITE);
     }
 
     draw_rectangle_lines(offset_x, offset_y, width, height, 2., BLACK);
 
+    let start_pos = height + offset_y;
+    draw_text(
+        &format!("Score: {}", snake.score()),
+        offset_x,
+        start_pos + 30.,
+        30.,
+        WHITE,
+    );
+    draw_text(
+        &format!("FPS: {}", get_fps()),
+        offset_x,
+        start_pos + 60.,
+        30.,
+        WHITE,
+    );
+    draw_text(
+        &format!("{} seconds", get_time().floor()),
+        offset_x,
+        start_pos + 90.,
+        30.,
+        WHITE,
+    );
+
     if board.game_over() {
-        draw_text(
-            "GAME OVER",
-            offset_x + width / 2. - (100.),
-            offset_y + height / 2.,
-            50.,
+        draw_centered_text("GAME OVER", screen_width() / 2., offset_y - 80., 100., RED);
+        draw_centered_text(
+            "Press <space> to restart the game",
+            screen_width() / 2.,
+            offset_y - 40.,
+            30.,
+            WHITE,
+        );
+        draw_centered_text(
+            "Press <q> to quit the game",
+            screen_width() / 2.,
+            offset_y - 20.,
+            30.,
             WHITE,
         );
         return;
+    } else {
+        draw_centered_text("SNAKE", screen_width() / 2., offset_y - 80., 100., GREEN);
+        draw_centered_text(
+            "Press <q> to quit the game",
+            screen_width() / 2.,
+            offset_y - 40.,
+            30.,
+            WHITE,
+        );
+        draw_centered_text(
+            "Use arrow keys for movement",
+            screen_width() / 2.,
+            offset_y - 20.,
+            30.,
+            WHITE,
+        );
     }
+}
+
+fn draw_centered_text(text: &str, x: f32, y: f32, font_size: f32, color: Color) {
+    let dimensions = measure_text(text, None, font_size as u16, 1.0);
+    draw_text(text, x - dimensions.width / 2., y, font_size, color);
 }
