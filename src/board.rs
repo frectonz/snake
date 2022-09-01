@@ -106,6 +106,7 @@ impl Board {
             cell.cell = CellType::Empty;
         }
         self.game_over = false;
+        self.generate_food();
     }
 
     pub fn generate_food(&mut self) {

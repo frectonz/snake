@@ -1,81 +1,163 @@
 use ruscii::{
     app::{App, Config, State},
     drawing::Pencil,
+    gui::FPSCounter,
     keyboard::{Key, KeyEvent},
     spatial::Vec2,
     terminal::{Color, Window},
 };
 use snake::{Board, CellType, Direction, Snake};
+use std::time::Instant;
 
-fn main() {
-    let config = Config::new().fps(15);
+struct Game {
+    board: Board,
+    snake: Snake,
+    fps_counter: FPSCounter,
+    offset: usize,
+    center: usize,
+    start: Instant,
+}
 
-    let mut app = App::config(config);
+impl Game {
+    fn game_over_keybindings(&mut self, app_state: &mut State) {
+        for key_event in app_state.keyboard().last_key_events() {
+            match key_event {
+                KeyEvent::Released(Key::Space) => {
+                    self.board.reset();
+                    self.snake.reset();
+                }
+                KeyEvent::Released(Key::Q) => app_state.stop(),
+                _ => (),
+            };
+        }
+    }
 
-    let size = app.window().size();
-    let mut board = Board::new(size.y.try_into().unwrap(), size.x.try_into().unwrap());
-    let mut snake = Snake::new();
-
-    board.generate_food();
-
-    app.run(|app_state: &mut State, window: &mut Window| {
+    fn game_keybindings(&mut self, app_state: &mut State) {
         for key_event in app_state.keyboard().last_key_events() {
             match key_event {
                 KeyEvent::Pressed(Key::Up) => {
-                    if snake.direction() != &Direction::Down {
-                        snake.change_direction(Direction::Up);
-                    }
+                    self.snake.change_direction(Direction::Up);
                 }
                 KeyEvent::Pressed(Key::Down) => {
-                    if snake.direction() != &Direction::Up {
-                        snake.change_direction(Direction::Down);
-                    }
+                    self.snake.change_direction(Direction::Down);
                 }
                 KeyEvent::Pressed(Key::Left) => {
-                    if snake.direction() != &Direction::Right {
-                        snake.change_direction(Direction::Left);
-                    }
+                    self.snake.change_direction(Direction::Left);
                 }
                 KeyEvent::Pressed(Key::Right) => {
-                    if snake.direction() != &Direction::Left {
-                        snake.change_direction(Direction::Right);
-                    }
+                    self.snake.change_direction(Direction::Right);
                 }
                 KeyEvent::Pressed(Key::Q) => app_state.stop(),
                 _ => (),
             }
         }
+    }
 
-        snake.update(&mut board);
-        snake.update_movement(&mut board);
+    fn draw_stats(&mut self, pencil: &mut Pencil) {
+        pencil.draw_text(
+            &format!("Score: {}", self.snake.score()),
+            Vec2::xy(self.offset, self.board.rows() + self.offset + 1),
+        );
+        pencil.draw_text(
+            &format!("FPS: {}", self.fps_counter.count()),
+            Vec2::xy(self.offset, self.board.rows() + self.offset + 2),
+        );
+        pencil.draw_text(
+            &format!("{} seconds", self.start.elapsed().as_secs()),
+            Vec2::xy(self.offset, self.board.rows() + self.offset + 3),
+        );
+    }
 
-        let mut pencil = Pencil::new(window.canvas_mut());
+    fn draw_game_over_header(&mut self, pencil: &mut Pencil) {
+        pencil.set_foreground(Color::Red);
+        pencil.draw_center_text("GAME OVER", Vec2::xy(self.center, 1));
+        pencil.set_foreground(Color::White);
+        pencil.draw_center_text(
+            "Press <space> to restart the game",
+            Vec2::xy(self.center, 2),
+        );
+        pencil.draw_center_text("Press <q> to quit the game", Vec2::xy(self.center, 3));
+    }
 
-        for cell in board.cells() {
+    fn draw_game_header(&mut self, pencil: &mut Pencil) {
+        pencil.set_foreground(Color::Green);
+        pencil.draw_center_text("SNAKE", Vec2::xy(self.center, 1));
+        pencil.set_foreground(Color::White);
+        pencil.draw_center_text("Press <q> to quit the game", Vec2::xy(self.center, 2));
+        pencil.draw_center_text("Use arrow keys for movement", Vec2::xy(self.center, 3));
+    }
+
+    fn draw_board(&mut self, pencil: &mut Pencil) {
+        for cell in self.board.cells() {
             let c = match cell.cell_type() {
-                CellType::Empty => ' ',
-                CellType::Food => '*',
-                CellType::Snake => '=',
-                CellType::SnakeHead => '+',
+                CellType::Empty => '.',
+                CellType::Food => ' ',
+                CellType::Snake => ' ',
+                CellType::SnakeHead => ' ',
             };
-            let p = Vec2::xy(cell.col(), cell.row());
+            let p = Vec2::xy(cell.col() + self.offset, cell.row() + self.offset);
 
             match cell.cell_type() {
                 CellType::Snake => {
-                    pencil.set_foreground(Color::Green);
+                    pencil.set_background(Color::Green);
                 }
                 CellType::SnakeHead => {
-                    pencil.set_foreground(Color::Green);
+                    pencil.set_background(Color::Blue);
                 }
                 CellType::Food => {
-                    pencil.set_foreground(Color::Blue);
+                    pencil.set_background(Color::Red);
                 }
-                _ => {
-                    pencil.set_foreground(Color::White);
+                CellType::Empty => {
+                    pencil.set_background(Color::Black);
                 }
             };
 
             pencil.draw_char(c, p);
+        }
+    }
+}
+
+fn main() {
+    let config = Config::new().fps(15);
+    let mut app = App::config(config);
+
+    let offset = 5;
+    let size = app.window().size();
+    let cols = size.x.try_into().unwrap_or(15);
+    let rows = size.y.try_into().unwrap_or(10);
+
+    let snake = Snake::new();
+    let mut board = Board::new(rows - (offset * 2), cols - (offset * 2));
+    board.generate_food();
+
+    let fps_counter = FPSCounter::new();
+    let center = (board.columns() / 2) + offset;
+
+    let mut game = Game {
+        board,
+        snake,
+        fps_counter,
+        offset,
+        center,
+        start: Instant::now(),
+    };
+
+    app.run(|app_state: &mut State, window: &mut Window| {
+        game.fps_counter.update();
+        let mut pencil = Pencil::new(window.canvas_mut());
+
+        if game.board.game_over() {
+            game.draw_game_over_header(&mut pencil);
+            game.draw_stats(&mut pencil);
+            game.game_over_keybindings(app_state);
+            game.draw_board(&mut pencil);
+        } else {
+            game.draw_game_header(&mut pencil);
+            game.draw_stats(&mut pencil);
+            game.game_keybindings(app_state);
+            game.snake.update(&mut game.board);
+            game.snake.update_movement(&mut game.board);
+            game.draw_board(&mut pencil);
         }
     });
 }

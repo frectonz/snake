@@ -1,6 +1,5 @@
-use std::collections::LinkedList;
-
 use super::{Board, CellType};
+use std::collections::LinkedList;
 
 struct Part {
     col: usize,
@@ -36,6 +35,9 @@ impl Snake {
 
     pub fn reset(&mut self) {
         self.parts.clear();
+        self.parts.push_back(Part { col: 5, row: 2 });
+        self.parts.push_back(Part { col: 4, row: 2 });
+        self.parts.push_back(Part { col: 3, row: 2 });
         self.parts.push_back(Part { col: 2, row: 2 });
         self.direction = Direction::Right;
     }
@@ -133,7 +135,21 @@ impl Snake {
     }
 
     pub fn change_direction(&mut self, dir: Direction) {
-        self.direction = dir;
+        match self.direction {
+            Direction::Up if dir != Direction::Down => {
+                self.direction = dir;
+            }
+            Direction::Down if dir != Direction::Up => {
+                self.direction = dir;
+            }
+            Direction::Left if dir != Direction::Right => {
+                self.direction = dir;
+            }
+            Direction::Right if dir != Direction::Left => {
+                self.direction = dir;
+            }
+            _ => {}
+        };
     }
 
     pub fn direction(&self) -> &Direction {
@@ -163,5 +179,9 @@ impl Snake {
             Direction::Left => self.move_left(board),
             Direction::Right => self.move_right(board),
         };
+    }
+
+    pub fn score(&self) -> usize {
+        self.parts.len() - 4
     }
 }
