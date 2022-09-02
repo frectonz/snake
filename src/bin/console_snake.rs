@@ -35,16 +35,16 @@ impl Game {
     fn game_keybindings(&mut self, app_state: &mut State) {
         for key_event in app_state.keyboard().last_key_events() {
             match key_event {
-                KeyEvent::Pressed(Key::Up) => {
+                KeyEvent::Pressed(Key::Up) | KeyEvent::Pressed(Key::W) => {
                     self.snake.change_direction(Direction::Up);
                 }
-                KeyEvent::Pressed(Key::Down) => {
+                KeyEvent::Pressed(Key::Down) | KeyEvent::Pressed(Key::S) => {
                     self.snake.change_direction(Direction::Down);
                 }
-                KeyEvent::Pressed(Key::Left) => {
+                KeyEvent::Pressed(Key::Left) | KeyEvent::Pressed(Key::A) => {
                     self.snake.change_direction(Direction::Left);
                 }
-                KeyEvent::Pressed(Key::Right) => {
+                KeyEvent::Pressed(Key::Right) | KeyEvent::Pressed(Key::D) => {
                     self.snake.change_direction(Direction::Right);
                 }
                 KeyEvent::Pressed(Key::Q) => app_state.stop(),
@@ -84,7 +84,10 @@ impl Game {
         pencil.draw_center_text("SNAKE", Vec2::xy(self.center, 1));
         pencil.set_foreground(Color::White);
         pencil.draw_center_text("Press <q> to quit the game", Vec2::xy(self.center, 2));
-        pencil.draw_center_text("Use arrow keys for movement", Vec2::xy(self.center, 3));
+        pencil.draw_center_text(
+            "Use arrow keys or <wasd> for movement",
+            Vec2::xy(self.center, 3),
+        );
     }
 
     fn draw_board(&mut self, pencil: &mut Pencil) {

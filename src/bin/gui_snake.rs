@@ -46,13 +46,13 @@ async fn main() {
 
 fn update_board(board: &mut Board, snake: &mut Snake) {
     if !board.game_over() {
-        if is_key_pressed(KeyCode::Up) {
+        if is_key_pressed(KeyCode::Up) || is_key_pressed(KeyCode::W) {
             snake.change_direction(Direction::Up);
-        } else if is_key_pressed(KeyCode::Down) {
+        } else if is_key_pressed(KeyCode::Down) || is_key_pressed(KeyCode::S) {
             snake.change_direction(Direction::Down);
-        } else if is_key_pressed(KeyCode::Left) {
+        } else if is_key_pressed(KeyCode::Left) || is_key_pressed(KeyCode::A) {
             snake.change_direction(Direction::Left);
-        } else if is_key_pressed(KeyCode::Right) {
+        } else if is_key_pressed(KeyCode::Right) || is_key_pressed(KeyCode::D) {
             snake.change_direction(Direction::Right);
         }
         snake.update(board);
@@ -136,7 +136,7 @@ fn draw_board(board: &Board, snake: &Snake) {
             WHITE,
         );
         draw_centered_text(
-            "Use arrow keys for movement",
+            "Use arrow keys or <wasd> for movement",
             screen_width() / 2.,
             offset_y - 20.,
             30.,
