@@ -22,11 +22,23 @@ impl Game {
     fn game_over_keybindings(&mut self, app_state: &mut State) {
         for key_event in app_state.keyboard().last_key_events() {
             match key_event {
-                KeyEvent::Released(Key::Space) => {
+                KeyEvent::Pressed(Key::Space) => {
                     self.board.reset();
                     self.snake.reset();
                 }
-                KeyEvent::Released(Key::Q) => app_state.stop(),
+                KeyEvent::Pressed(Key::Q) => app_state.stop(),
+                _ => (),
+            };
+        }
+    }
+
+    fn paused_keybindings(&mut self, app_state: &mut State) {
+        for key_event in app_state.keyboard().last_key_events() {
+            match key_event {
+                KeyEvent::Pressed(Key::Esc) => {
+                    self.board.toggle_pause();
+                }
+                KeyEvent::Pressed(Key::Q) => app_state.stop(),
                 _ => (),
             };
         }
@@ -46,6 +58,9 @@ impl Game {
                 }
                 KeyEvent::Pressed(Key::Right) | KeyEvent::Pressed(Key::D) => {
                     self.snake.change_direction(Direction::Right);
+                }
+                KeyEvent::Pressed(Key::Esc) => {
+                    self.board.toggle_pause();
                 }
                 KeyEvent::Pressed(Key::Q) => app_state.stop(),
                 _ => (),
@@ -84,10 +99,19 @@ impl Game {
         pencil.draw_center_text("SNAKE", Vec2::xy(self.center, 1));
         pencil.set_foreground(Color::White);
         pencil.draw_center_text("Press <q> to quit the game", Vec2::xy(self.center, 2));
+        pencil.draw_center_text("Press <ESC> to pause the game", Vec2::xy(self.center, 3));
         pencil.draw_center_text(
             "Use arrow keys or <wasd> for movement",
-            Vec2::xy(self.center, 3),
+            Vec2::xy(self.center, 4),
         );
+    }
+
+    fn draw_paused_header(&mut self, pencil: &mut Pencil) {
+        pencil.set_foreground(Color::Blue);
+        pencil.draw_center_text("PAUSED", Vec2::xy(self.center, 1));
+        pencil.set_foreground(Color::White);
+        pencil.draw_center_text("Press <q> to quit the game", Vec2::xy(self.center, 2));
+        pencil.draw_center_text("Press <ESC> to play the game", Vec2::xy(self.center, 3));
     }
 
     fn draw_board(&mut self, pencil: &mut Pencil) {
@@ -151,16 +175,19 @@ fn main() {
 
         if game.board.game_over() {
             game.draw_game_over_header(&mut pencil);
-            game.draw_stats(&mut pencil);
             game.game_over_keybindings(app_state);
-            game.draw_board(&mut pencil);
+        } else if game.board.paused() {
+            game.draw_paused_header(&mut pencil);
+            game.paused_keybindings(app_state);
         } else {
             game.draw_game_header(&mut pencil);
-            game.draw_stats(&mut pencil);
             game.game_keybindings(app_state);
+
             game.snake.update(&mut game.board);
             game.snake.update_movement(&mut game.board);
-            game.draw_board(&mut pencil);
         }
+
+        game.draw_board(&mut pencil);
+        game.draw_stats(&mut pencil);
     });
 }

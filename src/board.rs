@@ -35,6 +35,7 @@ pub struct Board {
     columns: usize,
     cells: Vec<Cell>,
     game_over: bool,
+    paused: bool,
 }
 
 impl Board {
@@ -56,7 +57,16 @@ impl Board {
             columns,
             cells,
             game_over: false,
+            paused: false,
         }
+    }
+
+    pub fn paused(&self) -> bool {
+        self.paused
+    }
+
+    pub fn toggle_pause(&mut self) {
+        self.paused = !self.paused;
     }
 
     pub fn game_over(&self) -> bool {
