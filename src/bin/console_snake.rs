@@ -187,7 +187,7 @@ fn main() {
             game.snake.update_movement(&mut game.board);
         }
 
-        game.draw_board(&mut pencil);
         game.draw_stats(&mut pencil);
+        game.draw_board(&mut pencil);
     });
 }
