@@ -1,8 +1,2 @@
-[package]
-name = "snake"
-version = "0.1.0"
-edition = "2021"
-
-[dependencies]
-macroquad = "0.3"
-ruscii = "0.3"
+[workspace]
+members = ["snake-tui", "snake-gui", "snake"]

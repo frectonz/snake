@@ -1,0 +1,8 @@
+[package]
+name = "snake-tui"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+snake = { path = "../snake" }
+ruscii = "0.3"

@@ -1,4 +1,4 @@
-use macroquad::rand;
+use tinyrand::{RandRange, StdRand};
 
 #[derive(Copy, Clone, PartialEq, Eq, Debug)]
 pub enum CellType {
@@ -120,12 +120,13 @@ impl Board {
     }
 
     pub fn generate_food(&mut self) {
-        let mut rand_row = rand::gen_range(0, self.rows);
-        let mut rand_col = rand::gen_range(0, self.columns);
+        let mut rand = StdRand::default();
+        let mut rand_row = rand.next_range(0..self.rows);
+        let mut rand_col = rand.next_range(0..self.columns);
 
         while !self.is_empty(rand_col, rand_row) {
-            rand_row = rand::gen_range(0, self.rows);
-            rand_col = rand::gen_range(0, self.columns);
+            rand_row = rand.next_range(0..self.rows);
+            rand_col = rand.next_range(0..self.columns);
         }
 
         self.set_cell(rand_col, rand_row, CellType::Food);
