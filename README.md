@@ -2,9 +2,11 @@
 
 To run the terminal version made using [ruscii](https://github.com/lemunozm/ruscii).
 
+[Watch the YouTube Demo](https://youtu.be/RHeQA1ISvE0)
+
 ## Terminal
 
-```
+```sh
 cargo run --bin console_snake
 ```
 
@@ -18,9 +20,8 @@ Asciinema example
 
 To run the gui version made using [macroquad](https://github.com/not-fl3/macroquad).
 
-```
+```sh
 cargo run --bin gui_snake
 ```
 
 ![console_snake](./gui_snake.png)
-
