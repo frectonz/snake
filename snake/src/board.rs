@@ -1,3 +1,5 @@
+use std::{fmt::Debug, sync::mpsc::SyncSender};
+
 use rand::{thread_rng, Rng};
 
 #[derive(Copy, Clone, PartialEq, Eq, Debug)]
@@ -29,17 +31,23 @@ impl Cell {
     }
 }
 
-#[derive(Debug)]
+pub enum GameEvent {
+    FoodEaten,
+    SnakeDied,
+    SnakeChangedDirection,
+}
+
 pub struct Board {
     rows: usize,
     columns: usize,
     cells: Vec<Cell>,
     game_over: bool,
     paused: bool,
+    event_sender: Option<SyncSender<GameEvent>>,
 }
 
 impl Board {
-    pub fn new(rows: usize, columns: usize) -> Self {
+    pub fn new(rows: usize, columns: usize, event_sender: Option<SyncSender<GameEvent>>) -> Self {
         let mut cells = Vec::with_capacity(rows * columns);
 
         for row in 0..rows {
@@ -58,6 +66,7 @@ impl Board {
             cells,
             game_over: false,
             paused: false,
+            event_sender,
         }
     }
 
@@ -74,6 +83,9 @@ impl Board {
     }
 
     pub fn end_game(&mut self) {
+        if let Some(event_sender) = &self.event_sender {
+            let _ = event_sender.send(GameEvent::SnakeDied);
+        }
         self.game_over = true;
     }
 
@@ -130,5 +142,17 @@ impl Board {
         }
 
         self.set_cell(rand_col, rand_row, CellType::Food);
+    }
+
+    pub(crate) fn food_eaten_event(&self) {
+        if let Some(event_sender) = &self.event_sender {
+            let _ = event_sender.send(GameEvent::FoodEaten);
+        }
+    }
+
+    pub(crate) fn change_direction_event(&self) {
+        if let Some(event_sender) = &self.event_sender {
+            let _ = event_sender.send(GameEvent::SnakeChangedDirection);
+        }
     }
 }

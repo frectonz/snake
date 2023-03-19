@@ -1,3 +1,7 @@
+use kira::{
+    manager::{backend::cpal::CpalBackend, AudioManager, AudioManagerSettings},
+    sound::static_sound::{StaticSoundData, StaticSoundSettings},
+};
 use ruscii::{
     app::{App, Config, State},
     drawing::Pencil,
@@ -6,8 +10,12 @@ use ruscii::{
     spatial::Vec2,
     terminal::{Color, Window},
 };
-use snake::{Board, CellType, Direction, Snake};
-use std::time::Instant;
+use snake::{Board, CellType, Direction, GameEvent, Snake};
+use std::{io::Cursor, sync::mpsc, time::Instant};
+
+const EAT_SOUND: &[u8] = include_bytes!("../../assets/eat.mp3");
+const DIE_SOUND: &[u8] = include_bytes!("../../assets/die.mp3");
+const MOVE_SOUND: &[u8] = include_bytes!("../../assets/move.mp3");
 
 struct Game {
     board: Board,
@@ -48,16 +56,19 @@ impl Game {
         for key_event in app_state.keyboard().last_key_events() {
             match key_event {
                 KeyEvent::Pressed(Key::Up) | KeyEvent::Pressed(Key::W) => {
-                    self.snake.change_direction(Direction::Up);
+                    self.snake.change_direction(Direction::Up, &mut self.board);
                 }
                 KeyEvent::Pressed(Key::Down) | KeyEvent::Pressed(Key::S) => {
-                    self.snake.change_direction(Direction::Down);
+                    self.snake
+                        .change_direction(Direction::Down, &mut self.board);
                 }
                 KeyEvent::Pressed(Key::Left) | KeyEvent::Pressed(Key::A) => {
-                    self.snake.change_direction(Direction::Left);
+                    self.snake
+                        .change_direction(Direction::Left, &mut self.board);
                 }
                 KeyEvent::Pressed(Key::Right) | KeyEvent::Pressed(Key::D) => {
-                    self.snake.change_direction(Direction::Right);
+                    self.snake
+                        .change_direction(Direction::Right, &mut self.board);
                 }
                 KeyEvent::Pressed(Key::Esc) => {
                     self.board.toggle_pause();
@@ -144,7 +155,36 @@ impl Game {
     }
 }
 
+fn make_sound_data(sound: &'static [u8]) -> StaticSoundData {
+    let sound_data_cursor = Cursor::new(sound);
+    StaticSoundData::from_cursor(sound_data_cursor, StaticSoundSettings::default()).unwrap()
+}
+
 fn main() {
+    let (tx, rx) = mpsc::sync_channel(1);
+    let mut manager = AudioManager::<CpalBackend>::new(AudioManagerSettings::default())
+        .expect("Failed to create audio manager");
+
+    let eat_sound = make_sound_data(EAT_SOUND);
+    let die_sound = make_sound_data(DIE_SOUND);
+    let move_sound = make_sound_data(MOVE_SOUND);
+
+    std::thread::spawn(move || {
+        while let Ok(msg) = rx.recv() {
+            match msg {
+                GameEvent::FoodEaten => {
+                    let _ = manager.play(eat_sound.clone());
+                }
+                GameEvent::SnakeDied => {
+                    let _ = manager.play(die_sound.clone());
+                }
+                GameEvent::SnakeChangedDirection => {
+                    let _ = manager.play(move_sound.clone());
+                }
+            }
+        }
+    });
+
     let config = Config::new().fps(15);
     let mut app = App::config(config);
 
@@ -154,7 +194,8 @@ fn main() {
     let rows = size.y.try_into().unwrap_or(10);
 
     let snake = Snake::new();
-    let mut board = Board::new(rows - (offset * 2), cols - (offset * 2));
+    let mut board = Board::new(rows - (offset * 2), cols - (offset * 2), Some(tx));
+
     board.generate_food();
 
     let fps_counter = FPSCounter::new();

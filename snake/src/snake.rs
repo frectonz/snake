@@ -49,12 +49,9 @@ impl Snake {
     }
 
     pub fn pop_end(&mut self, board: &mut Board) {
-        match self.parts.pop_back() {
-            Some(cell) => {
-                board.set_cell(cell.col, cell.row, CellType::Empty);
-            }
-            None => {}
-        };
+        if let Some(cell) = self.parts.pop_back() {
+            board.set_cell(cell.col, cell.row, CellType::Empty);
+        }
     }
 
     pub fn move_up(&mut self, board: &mut Board) {
@@ -140,7 +137,8 @@ impl Snake {
         self.parts.push_back(new_tail);
     }
 
-    pub fn change_direction(&mut self, dir: Direction) {
+    pub fn change_direction(&mut self, dir: Direction, board: &mut Board) {
+        board.change_direction_event();
         match self.direction {
             Direction::Up if dir != Direction::Down => {
                 self.direction = dir;
@@ -164,8 +162,10 @@ impl Snake {
 
     pub fn update(&mut self, board: &mut Board) {
         let head = self.parts.front().unwrap();
+
         if board.is_food(head.col, head.row) {
             self.grow(board);
+            board.food_eaten_event();
             board.generate_food();
         }
 

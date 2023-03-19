@@ -6,3 +6,4 @@ edition = "2021"
 [dependencies]
 snake = { path = "../snake" }
 ruscii = "0.3"
+kira = { version = "0.7.3", features = ["cpal", "mp3"] }

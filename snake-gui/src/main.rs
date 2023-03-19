@@ -18,7 +18,7 @@ async fn main() {
     let rows: usize = (screen_height() / BLOCK_SIZE) as usize;
     let columns: usize = (screen_width() / BLOCK_SIZE) as usize;
 
-    let mut board = Board::new(rows, columns);
+    let mut board = Board::new(rows, columns, None);
     let mut snake = Snake::new();
 
     board.generate_food();
@@ -47,13 +47,13 @@ async fn main() {
 fn update_board(board: &mut Board, snake: &mut Snake) {
     if !board.game_over() {
         if is_key_pressed(KeyCode::Up) || is_key_pressed(KeyCode::W) {
-            snake.change_direction(Direction::Up);
+            snake.change_direction(Direction::Up, board);
         } else if is_key_pressed(KeyCode::Down) || is_key_pressed(KeyCode::S) {
-            snake.change_direction(Direction::Down);
+            snake.change_direction(Direction::Down, board);
         } else if is_key_pressed(KeyCode::Left) || is_key_pressed(KeyCode::A) {
-            snake.change_direction(Direction::Left);
+            snake.change_direction(Direction::Left, board);
         } else if is_key_pressed(KeyCode::Right) || is_key_pressed(KeyCode::D) {
-            snake.change_direction(Direction::Right);
+            snake.change_direction(Direction::Right, board);
         }
         snake.update(board);
     }
