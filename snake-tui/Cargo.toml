@@ -2,6 +2,7 @@
 name = "snake-tui"
 version = "0.1.0"
 edition = "2021"
+default-run = "snake-tui"
 
 [dependencies]
 snake = { path = "../snake" }
