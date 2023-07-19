@@ -128,7 +128,7 @@ impl Game {
     fn draw_board(&mut self, pencil: &mut Pencil) {
         for cell in self.board.cells() {
             let c = match cell.cell_type() {
-                CellType::Empty => '.',
+                CellType::Empty => '·',
                 CellType::Food => ' ',
                 CellType::Snake => ' ',
                 CellType::SnakeHead => ' ',
