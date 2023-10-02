@@ -5,4 +5,4 @@ edition = "2021"
 
 [dependencies]
 snake = { path = "../snake" }
-macroquad = {version ="0.3.25", default-features = false }
+macroquad = { version = "0.3.25", default-features = false }
