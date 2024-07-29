@@ -24,37 +24,58 @@
           inherit system overlays;
         };
 
-        craneLib = crane.lib.${system};
-        src = craneLib.cleanCargoSource (craneLib.path ./snake-tui);
+        rustToolchain = pkgs.rust-bin.stable.latest.default;
+        craneLib = (crane.mkLib pkgs).overrideToolchain rustToolchain;
 
-        commonArgs = {
-          inherit src;
-          cargoVendorDir = craneLib.vendorCargoDeps { cargoLock = ./Cargo.lock; };
+        src = pkgs.lib.cleanSourceWith {
+          src = ./.;
+          filter = path: type:
+            (pkgs.lib.hasSuffix "\.mp3" path) ||
+            (craneLib.filterCargoSources path type)
+          ;
         };
 
-        cargoArtifacts = craneLib.buildDepsOnly commonArgs;
-        bin = craneLib.buildPackage (commonArgs // {
-          inherit cargoArtifacts;
+        commonArgs = {
+          version = "0.1.0";
+          buildInputs = with pkgs; [ pkg-config alsa-lib xorg.libX11 ];
+
+          LD_LIBRARY_PATH = builtins.concatStringsSep ":" [
+            "${pkgs.xorg.libX11}/lib"
+            "${pkgs.xorg.libXi}/lib"
+            "${pkgs.libGL}/lib"
+            "${pkgs.libxkbcommon}/lib"
+          ];
+        };
+
+        cargoArtifacts = craneLib.buildDepsOnly (commonArgs // {
+          inherit src;
+          pname = "snake-workspace";
         });
 
+        snake-tui = craneLib.buildPackage (commonArgs // {
+          inherit src cargoArtifacts;
+          pname = "snake-tui";
+          cargoBuildCommand = "cargo build --profile release --package snake-tui";
+        });
+
+        snake-gui = craneLib.buildPackage (commonArgs // {
+          inherit src cargoArtifacts;
+          pname = "snake-gui";
+          cargoBuildCommand = "cargo build --profile release --package snake-gui";
+        });
       in
       with pkgs;
       {
-
         packages = {
-          inherit bin;
-          default = bin;
+          inherit snake-tui snake-gui;
+          default = snake-tui;
         };
 
         devShells.default = mkShell {
           buildInputs = [
+            rustToolchain
             pkg-config
             alsa-lib
-          ];
-          packages = [
-            rust-bin.stable.latest.default
-            rust-analyzer
-            nil
           ];
 
           LD_LIBRARY_PATH = builtins.concatStringsSep ":" [
