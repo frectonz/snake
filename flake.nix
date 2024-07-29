@@ -4,16 +4,11 @@
     flake-utils.url = "github:numtide/flake-utils";
     rust-overlay = {
       url = "github:oxalica/rust-overlay";
-      inputs = {
-        nixpkgs.follows = "nixpkgs";
-      };
+      inputs.nixpkgs.follows = "nixpkgs";
     };
-
     crane = {
       url = "github:ipetkov/crane";
-      inputs = {
-        nixpkgs.follows = "nixpkgs";
-      };
+      inputs.nixpkgs.follows = "nixpkgs";
     };
   };
   outputs = { self, nixpkgs, flake-utils, rust-overlay, crane }:
@@ -35,16 +30,11 @@
           ;
         };
 
+        runtimeDeps = with pkgs; [ xorg.libX11 xorg.libXi libGL libxkbcommon ];
+
         commonArgs = {
           version = "0.1.0";
-          buildInputs = with pkgs; [ pkg-config alsa-lib xorg.libX11 ];
-
-          LD_LIBRARY_PATH = builtins.concatStringsSep ":" [
-            "${pkgs.xorg.libX11}/lib"
-            "${pkgs.xorg.libXi}/lib"
-            "${pkgs.libGL}/lib"
-            "${pkgs.libxkbcommon}/lib"
-          ];
+          buildInputs = with pkgs; [ pkg-config alsa-lib xorg.libX11 makeWrapper ];
         };
 
         cargoArtifacts = craneLib.buildDepsOnly (commonArgs // {
@@ -58,10 +48,14 @@
           cargoBuildCommand = "cargo build --profile release --package snake-tui";
         });
 
-        snake-gui = craneLib.buildPackage (commonArgs // {
+        snake-gui = craneLib.buildPackage (commonArgs // rec {
           inherit src cargoArtifacts;
           pname = "snake-gui";
           cargoBuildCommand = "cargo build --profile release --package snake-gui";
+
+          postInstall = ''
+            wrapProgram $out/bin/${pname} --prefix LD_LIBRARY_PATH : ${pkgs.lib.makeLibraryPath runtimeDeps}
+          '';
         });
       in
       with pkgs;
@@ -78,12 +72,7 @@
             alsa-lib
           ];
 
-          LD_LIBRARY_PATH = builtins.concatStringsSep ":" [
-            "${pkgs.xorg.libX11}/lib"
-            "${pkgs.xorg.libXi}/lib"
-            "${pkgs.libGL}/lib"
-            "${pkgs.libxkbcommon}/lib"
-          ];
+          LD_LIBRARY_PATH = "${pkgs.lib.makeLibraryPath runtimeDeps}";
         };
 
         formatter = nixpkgs-fmt;
