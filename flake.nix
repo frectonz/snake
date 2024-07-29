@@ -66,11 +66,7 @@
         };
 
         devShells.default = mkShell {
-          buildInputs = [
-            rustToolchain
-            pkg-config
-            alsa-lib
-          ];
+          buildInputs = [ rustToolchain pkg-config alsa-lib xorg.libX11 ];
 
           LD_LIBRARY_PATH = "${pkgs.lib.makeLibraryPath runtimeDeps}";
         };
