@@ -49,17 +49,19 @@
         devShells.default = mkShell {
           buildInputs = [
             pkg-config
-
             alsa-lib
-            alsa-lib.dev
-
-            xorg.libX11
-            xorg.libX11.dev
           ];
           packages = [
             rust-bin.stable.latest.default
             rust-analyzer
             nil
+          ];
+
+          LD_LIBRARY_PATH = builtins.concatStringsSep ":" [
+            "${pkgs.xorg.libX11}/lib"
+            "${pkgs.xorg.libXi}/lib"
+            "${pkgs.libGL}/lib"
+            "${pkgs.libxkbcommon}/lib"
           ];
         };
 

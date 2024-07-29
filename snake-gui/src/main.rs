@@ -6,8 +6,6 @@ const BLOCK_SIZE: f32 = 30.;
 fn window_conf() -> Conf {
     Conf {
         window_title: "Snake".to_owned(),
-        window_width: 800,
-        window_height: 800,
         fullscreen: true,
         ..Default::default()
     }
@@ -15,8 +13,8 @@ fn window_conf() -> Conf {
 
 #[macroquad::main(window_conf)]
 async fn main() {
-    let rows: usize = (screen_height() / BLOCK_SIZE) as usize;
-    let columns: usize = (screen_width() / BLOCK_SIZE) as usize;
+    let rows: usize = (600. / BLOCK_SIZE) as usize;
+    let columns: usize = (600. / BLOCK_SIZE) as usize;
 
     let mut board = Board::new(rows, columns, None);
     let mut snake = Snake::new();
