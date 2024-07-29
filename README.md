@@ -4,6 +4,20 @@ To run the terminal version made using [ruscii](https://github.com/lemunozm/rusc
 
 [Watch the YouTube Demo](https://youtu.be/RHeQA1ISvE0)
 
+## Run with Nix
+
+### TUI
+
+```sh
+nix run github:frectonz/snake#snake-tui
+```
+
+### GUI
+
+```sh
+nix run github:frectonz/snake#snake-gui
+```
+
 ## Terminal
 
 ```sh
