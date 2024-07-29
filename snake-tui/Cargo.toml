@@ -6,5 +6,5 @@ default-run = "snake-tui"
 
 [dependencies]
 snake = { path = "../snake" }
-ruscii = "0.3"
-kira = { version = "0.7.3", features = ["cpal", "mp3"] }
+ruscii = "0.4"
+kira = { version = "0.9", features = ["cpal", "mp3"] }

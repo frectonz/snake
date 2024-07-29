@@ -1,6 +1,6 @@
 use kira::{
     manager::{backend::cpal::CpalBackend, AudioManager, AudioManagerSettings},
-    sound::static_sound::{StaticSoundData, StaticSoundSettings},
+    sound::static_sound::StaticSoundData,
 };
 use ruscii::{
     app::{App, Config, State},
@@ -157,7 +157,7 @@ impl Game {
 
 fn make_sound_data(sound: &'static [u8]) -> StaticSoundData {
     let sound_data_cursor = Cursor::new(sound);
-    StaticSoundData::from_cursor(sound_data_cursor, StaticSoundSettings::default()).unwrap()
+    StaticSoundData::from_cursor(sound_data_cursor).unwrap()
 }
 
 fn main() {
@@ -198,7 +198,7 @@ fn main() {
 
     board.generate_food();
 
-    let fps_counter = FPSCounter::new();
+    let fps_counter = FPSCounter::default();
     let center = (board.columns() / 2) + offset;
 
     let mut game = Game {

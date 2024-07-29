@@ -1,5 +1,6 @@
 [workspace]
 members = ["snake-tui", "snake-gui", "snake"]
+resolver = "2"
 
 [profile.release]
 strip = true
